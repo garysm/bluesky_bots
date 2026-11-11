@@ -1,0 +1,24 @@
+name: narrative
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13
+  - jupyterlab
+  - ipykernel
+  - pandas
+  - pyarrow
+  - scikit-learn
+  - networkx
+  - plotly
+  - papermill
+  - pyyaml
+  - python-dotenv
+  - websockets
+  - httpx
+  - pip
+  - pip:
+      - "google-adk[extensions]==2.7.1"   # [extensions] brings LiteLLM, needed for Ollama
+      - duckdb
+      - ollama
+      - datasketch
+      - atproto                           # only used if search ever needs a login
