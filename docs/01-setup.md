@@ -7,12 +7,12 @@ What is installed on this PC, where models are chosen, and a first model call.
 | Item | Location |
 | --- | --- |
 | conda | `E:\miniconda` (not on PATH; use "Anaconda Prompt (miniconda3)") |
-| Environment | `narrative`, Python 3.13, Jupyter kernel "Python (narrative)" |
+| Environment | `bsky`, Python 3.14, Jupyter kernel "Python (bsky)" |
 | Project settings | `.env` in the project root: model names, API keys, local runtime addresses |
 
 ## Choose a model
 
-Every page that uses a model reads its name from `.env`, so you can switch between a cloud API and a model running on this PC without changing code. [13](13-choosing-models.md) lists the keys, suggests models for each job, and covers local runtimes, including the Ollama setup already on this PC.
+Every page that uses a model reads its name from `.env`, so you can switch between a cloud API and a model running on this PC without changing code. [13](13-choosing-models.md) lists the keys, suggests models for each job, and covers local runtimes.
 
 The quickest start is a cloud model. Get a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey) and add to `.env`:
 
@@ -37,7 +37,7 @@ runner = InMemoryRunner(agent=hello, app_name="hello")
 await runner.run_debug("Say hello and name the model family you belong to.")
 ```
 
-In a plain script, wrap the last two lines in an `async def main()` and call `asyncio.run(main())`.
+In a plain script, wrap the last two lines in an `async def main()` and call `asyncio.run(main())`. [15 Async Python](15-async-python.md) explains why a notebook and a script differ here.
 
 ADK picks the right connector from the model name: `gemini-*` goes to the Gemini API, and `provider/model` names such as `anthropic/...` or `ollama_chat/...` go through LiteLLM ([13](13-choosing-models.md)).
 
@@ -57,11 +57,11 @@ conda env create -f environment.yml
 ```
 
 ```bash
-conda activate narrative
+conda activate bsky
 ```
 
 ```bash
-python -m ipykernel install --user --name narrative
+python -m ipykernel install --user --name bsky --display-name "Python (bsky)"
 ```
 
 Then copy `.env` (without sharing its keys) and, if you use a local runtime, install it and its models as described in [13](13-choosing-models.md).

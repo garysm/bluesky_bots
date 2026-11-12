@@ -18,7 +18,7 @@ How the principles in the project overview show up in the code on these pages. U
 ## Two more rules
 
 - **Honor deletions.** The loader removes deleted posts from every table, and landing files are removed after loading ([04](04-storage.md)).
-- **Check Bluesky's developer terms** on bulk collection and redistribution before publishing any data, and note what you found alongside your methods.
+- **Check Bluesky's developer terms** on bulk collection and redistribution before publishing any data, and note what you found alongside your methods. Start with the [developer guidelines](https://bsky.network/docs/developer-guidelines), which require a way to delete content when a user asks, and the [terms of service](https://blueskyweb.xyz/support/tos) and [privacy policy](https://blueskyweb.xyz/support/privacy-policy) they point to.
 
 ## When reviewing accounts
 
