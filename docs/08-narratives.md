@@ -2,19 +2,24 @@
 
 Turn posts into vectors, group similar ones into narratives, name each group, and keep the same narrative ID from day to day.
 
-Needs: Ollama running with `embeddinggemma` and `gemma4:e2b`, `load_dotenv()` first, `scikit-learn`.
+Needs: `load_dotenv()` first, `EMBED_MODEL` and `NAMING_MODEL` in `.env` as LiteLLM names ([13](13-choosing-models.md)), `scikit-learn`.
 
 ## Embed, cluster, match, name
 
 ```python
+import json, os
+import litellm
 import numpy as np
-import ollama
 from sklearn.cluster import HDBSCAN
+
+EMBED_MODEL = os.environ["EMBED_MODEL"]     # e.g. gemini/gemini-embedding-2 or ollama/embeddinggemma
+NAMING_MODEL = os.environ["NAMING_MODEL"]   # e.g. gemini/gemini-flash-lite-latest
 
 def embed(texts: list[str], batch: int = 64) -> np.ndarray:
     rows = []
     for i in range(0, len(texts), batch):
-        rows.extend(ollama.embed(model="embeddinggemma", input=texts[i:i + batch])["embeddings"])
+        resp = litellm.embedding(model=EMBED_MODEL, input=texts[i:i + batch])
+        rows.extend(d["embedding"] for d in resp.data)
     x = np.asarray(rows, dtype=np.float32)
     return x / np.linalg.norm(x, axis=1, keepdims=True)
 
@@ -42,11 +47,10 @@ most eight words and a one-sentence summary. Describe the topic, not whether it 
 Reply as JSON: {"name": "...", "summary": "..."}"""
 
 def name_cluster(sample_posts: list[str]) -> dict:
-    import json
     listing = "\n".join("- " + p for p in sample_posts)
-    reply = ollama.chat(model="gemma4:e2b", format="json",
-                        messages=[{"role": "user", "content": NAMING_PROMPT + "\n\n" + listing}])
-    return json.loads(reply["message"]["content"])
+    reply = litellm.completion(model=NAMING_MODEL, response_format={"type": "json_object"},
+                               messages=[{"role": "user", "content": NAMING_PROMPT + "\n\n" + listing}])
+    return json.loads(reply.choices[0].message.content)
 ```
 
 ## Putting it together
@@ -64,9 +68,13 @@ for k, c in cents.items():
 # mapping = match_to_previous(todays_centroids, yesterdays_centroids)
 ```
 
+These two functions call LiteLLM directly rather than through ADK, so the model names carry a provider prefix (`gemini/...`, not `gemini-...`). The code was first run with EmbeddingGemma and Gemma 4 `e2b` through Ollama; the LiteLLM version above has not been run yet.
+
 ## Good to know
 
-- **Speed.** 60 short posts embedded in about 13 seconds. Save vectors to Parquet keyed by post URI so nothing is embedded twice.
+- **Speed.** With EmbeddingGemma on this PC, 60 short posts embedded in about 13 seconds. Save vectors to Parquet keyed by post URI so nothing is embedded twice.
+- **Keep one embedding model.** Vectors from different models cannot be compared. Changing `EMBED_MODEL` means re-embedding the rolling window, and `match_to_previous` cannot link old narratives to new ones across the switch. Record the model name next to the saved vectors.
+- **Cloud embeddings send post text off this PC**, as any cloud model does ([13](13-choosing-models.md)). Send text only, not URIs.
 - **A large unclustered group is normal.** On a tiny test of three planted topics, two were found and the third was left as `-1`. Lower `min_size` for small samples.
 - **What to cluster.** Original posts and quote posts by their own text. Give a repost the narrative of the post it reposts, and a reply the narrative of its root post.
 - **Very short posts** group by phrasing instead of topic. Skip posts under about 40 characters and assign them through their thread.

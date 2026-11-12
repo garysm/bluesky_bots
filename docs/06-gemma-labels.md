@@ -1,24 +1,23 @@
-# 06 Labeling posts with Gemma
+# 06 Labeling posts
 
-A workflow that takes a batch of posts, drops the ones that mention no leader, asks Gemma for the stance of each remaining post, and separates unsure labels for review.
+A workflow that takes a batch of posts, drops the ones that mention no leader, asks a model for the stance of each remaining post, and separates unsure labels for review.
 
-Needs: Ollama running, `load_dotenv()` first. Read [05](05-adk-workflows.md) for the workflow API.
+Needs: `load_dotenv()` first, `LABEL_MODEL_FAST` in `.env` ([13](13-choosing-models.md)). Read [05](05-adk-workflows.md) for the workflow API. This page uses one model; [14](14-escalating-labels.md) builds on it with cheaper and stronger tiers.
 
 ## The workflow
 
 ```python
-import re
+import os, re
 from typing import Literal
 from pydantic import BaseModel, Field
 from google.adk import Agent, Context, Runner
-from google.adk.models.lite_llm import LiteLlm
 from google.adk.sessions import InMemorySessionService
 from google.adk.workflow import Workflow, node, START
 from google.genai import types
 
 LEADERS = {"schumer": r"\bschumer\b", "jeffries": r"\bjeffries\b"}
 PROMPT_VERSION = "stance-v1"
-MODEL = "ollama_chat/gemma4:e2b"
+MODEL = os.environ["LABEL_MODEL_FAST"]   # e.g. gemini-flash-lite-latest; see 13
 
 class Post(BaseModel):
     uri: str
@@ -42,7 +41,7 @@ with low confidence. Copy the uri unchanged."""
 
 classify_post = Agent(
     name="classify_post",
-    model=LiteLlm(model=MODEL),
+    model=MODEL,
     instruction=INSTRUCTION,
     output_schema=PostLabel,
 )
@@ -118,21 +117,23 @@ The printed lines show each node's output. The labels arrive as one list at `lab
 
 ## Turning thinking off
 
-Gemma reasons step by step before answering, which is slow. To skip that, replace the `model=` line inside `Agent(...)` with:
+Many models reason step by step before answering, which is slow and, on paid APIs, costs output tokens. For a `provider/model` name, replace the `model=` line inside `Agent(...)` with:
 
 ```python
-model=LiteLlm(model=MODEL, reasoning_effort="none"),
+model=LiteLlm(model=MODEL, reasoning_effort="none"),   # from google.adk.models.lite_llm import LiteLlm
 ```
+
+Native Gemini names use `generate_content_config` instead; [13](13-choosing-models.md) shows both.
 
 ## What a first run showed
 
-Five sample posts, Gemma 4 `e2b`, while a game was using most of the GPU.
+Five sample posts, Gemma 4 `e2b` running locally through Ollama ([13](13-choosing-models.md)), while a game was using most of the GPU. Other models will differ; repeat this check for whichever model you use.
 
 | Result | What to do about it |
 | --- | --- |
 | Clearly critical and clearly supportive posts were labeled correctly. The off-topic post never reached the model. | The pipeline works. |
 | "Oh sure, Schumer is a master strategist, just look at all those wins" was labeled **supportive**. | Sarcasm fools this model. Hand-check a sample that includes sarcastic posts before trusting any trend. |
-| `confidence` was 1.0 on every post, including the wrong one. | The 0.6 cut in `check_confidence` filters nothing. Label each post twice (thinking on and off, or two wordings) and review the disagreements. |
+| `confidence` was 1.0 on every post, including the wrong one. | The 0.6 cut in `check_confidence` filters nothing. Escalate on signals you can measure instead, as [14](14-escalating-labels.md) does. |
 | `tone` was "angry" for almost everything and changed between runs. | Drop the field or measure it before using it. |
 | Thinking on: about 38 seconds per post. Thinking off: about 10. | Roughly 2,000 to 8,000 labels a day in that state. Re-time with the GPU free, and label a sample rather than everything. |
 | With thinking off, a neutral announcement was also labeled supportive. | Faster is less accurate. Compare both on your hand-checked sample. |
@@ -143,4 +144,6 @@ Five sample posts, Gemma 4 `e2b`, while a game was using most of the GPU.
 - For replies, fill `parent_text` from the `posts` table so the model sees what is being answered.
 - Replace `persist` and `queue_review` with inserts.
 - Change `PROMPT_VERSION` whenever you change `INSTRUCTION`.
+- To settle easy posts cheaply and send hard ones to a stronger model, move to the tiered workflow in [14](14-escalating-labels.md).
+- Posts sent to a cloud model leave this PC, and `uri` contains the author's DID. [14](14-escalating-labels.md) sends an index instead; see also [13](13-choosing-models.md).
 - Keep the schema about the post. Do not add fields that ask whether the author is genuine; the model has no basis for that, and the project's first principle rules it out.

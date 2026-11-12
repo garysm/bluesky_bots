@@ -9,7 +9,7 @@ Where each local piece would move if the project outgrows this PC. Nothing here 
 | DuckDB file | BigQuery tables with the same columns | Notebooks can keep using DuckDB on exported Parquet. |
 | Loader, signals, clustering | Cloud Run jobs started by Cloud Scheduler | Same Python in a container. |
 | ADK workflow | Cloud Run job | The workflow code does not change. |
-| Gemma through Ollama | Ollama on Cloud Run with a GPU, or a hosted `gemma-4-*` model | For hosted models only the model string changes; ADK 2.7.1 routes `gemma-4*` names to its Gemini class. A larger Gemma is the main reason to move. |
+| A model on a local runtime | A hosted model (Gemini, hosted `gemma-4-*`, or any LiteLLM provider), or the same runtime on Cloud Run with a GPU | For hosted models only the `.env` string changes ([13](13-choosing-models.md)); ADK 2.7.1 routes `gemini-*` and `gemma-4*` names to its Gemini class. |
 | `.env` | Secret Manager | `ANON_SALT` must keep the same value or anonymous IDs change. |
 | HTML reports | Static files in a Cloud Storage bucket | |
 

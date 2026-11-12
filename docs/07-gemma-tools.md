@@ -1,15 +1,15 @@
-# 07 Gemma with tools
+# 07 An agent with tools
 
 An agent that calls Python functions you give it. Here it queries the database for aggregate numbers and drafts a paragraph from them.
 
-Needs: Ollama running, `load_dotenv()` first, a database with `posts`, `labels`, `narratives` and the `flagged` view from [09](09-signals.md).
+Needs: `load_dotenv()` first, `ANALYST_MODEL` in `.env` ([13](13-choosing-models.md)), a database with `posts`, `labels`, `narratives` and the `flagged` view from [09](09-signals.md).
 
 ## The agent
 
 ```python
+import os
 import duckdb
 from google.adk import Agent
-from google.adk.models.lite_llm import LiteLlm
 from google.adk.runners import InMemoryRunner
 
 DB = "data/narrative.duckdb"
@@ -37,7 +37,7 @@ def narrative_share(run_date: str, top_n: int = 10) -> list[dict]:
 
 analyst = Agent(
     name="analyst",
-    model=LiteLlm(model="ollama_chat/gemma4:e2b"),
+    model=os.environ["ANALYST_MODEL"],
     instruction="""You draft findings for a research report. Use only numbers returned
 by your tools and quote them exactly. Describe what was observed; do not call anything
 a campaign, a bot network or inauthentic. Say plainly when the flagged and unflagged
@@ -56,10 +56,12 @@ series are close. Never mention individual accounts. A human will edit your draf
 - Any plain Python function can be a tool. Pass it in `tools=[...]`.
 - The function name, type hints and docstring are what the model sees, so write the docstring for the model.
 - Return JSON-friendly values: strings, numbers, lists, dicts. Cast dates to text in SQL.
-- Gemma 4 calls tools natively; ADK needs no special class for it.
+- Gemini, Gemma 4, Claude and recent OpenAI models call tools natively. Very small local models may not; test before relying on one.
 - `run_debug(..., verbose=True)` prints each tool call and its result.
 
 ## What a first run showed
+
+With Gemma 4 `e2b` running locally. A stronger model will likely write better drafts; the checks below still apply.
 
 - Gemma called `leader_stance_by_day` on its own with correct dates.
 - It passed "Schumer" with a capital S while labels store lowercase, and got nothing back. The tool now lowercases its input. Expect to normalize whatever a model sends.
@@ -71,6 +73,7 @@ Use it for a rough first draft at most, and check every sentence against the tab
 
 ## Good to know
 
-- **The tools are the safety boundary.** These return daily counts only, so the agent cannot repeat a handle or DID it never receives. Keep it that way: no tool should return rows about individual accounts.
+- **The tools are the safety boundary.** These return daily counts only, so the agent cannot repeat a handle or DID it never receives. Keep it that way: no tool should return rows about individual accounts. It also means pointing `ANALYST_MODEL` at a cloud model sends only aggregates off this PC.
+- **With tiered labels** ([14](14-escalating-labels.md)), have the tools read `labels_final` instead of `labels`, or each post is counted once per tier.
 - Open the database `read_only=True` inside tools.
 - For a single agent, `InMemoryRunner` plus `run_debug` is enough. Use a `Workflow` when there are several steps or branches.

@@ -17,8 +17,7 @@ dependencies:
   - httpx
   - pip
   - pip:
-      - "google-adk[extensions]==2.7.1"   # [extensions] brings LiteLLM, needed for Ollama
+      - "google-adk[extensions]==2.7.1"   # [extensions] brings LiteLLM: non-Gemini models, embeddings
       - duckdb
-      - ollama
       - datasketch
       - atproto                           # only used if search ever needs a login

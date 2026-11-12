@@ -1,6 +1,6 @@
 # 05 ADK workflows
 
-The ADK 2.x workflow API in one small example. It uses plain functions only, so it runs without Ollama.
+The ADK 2.x workflow API in one small example. It uses plain functions only, so it runs without any model.
 
 Needs: `google-adk` 2.7.1.
 
@@ -88,4 +88,4 @@ A parallel worker receives a list, runs the wrapped function or agent once per i
 - **In a notebook** call `await run(...)`. `asyncio.run` is for scripts.
 - `Runner(node=...)` runs a workflow. `InMemoryRunner(agent=...)` with `run_debug` is the quick way to try a single agent; see [07](07-gemma-tools.md).
 
-Next: [06](06-gemma-labels.md) puts a Gemma agent inside this kind of workflow.
+Next: [06](06-gemma-labels.md) puts a model-backed agent inside this kind of workflow, and [14](14-escalating-labels.md) chains several of them.
