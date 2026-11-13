@@ -1,0 +1,36 @@
+# The study the guide started from, now one topic among any number.
+# Format: bluesky_bots/topics/schema.py. Guide: docs/02-topics.md.
+
+name: dem-leadership
+title: Democratic congressional leadership
+active: true
+
+match:                          # a post is in the topic when any one rule matches
+  keywords: [schumer, jeffries] # whole words, any case
+  patterns: []                  # regular expressions, for what keywords cannot say
+  accounts:                     # handles or DIDs: their posts, and replies to, quotes and reposts of them
+    - did:plc:z72i7hdynmk6r22z27h6tvur   # bsky.app, as a placeholder; replace with your own list
+
+search: [Schumer, Jeffries]     # queries the backfill service runs for this topic
+
+entities:                       # the things a label can be about, with the words that suggest them
+  schumer: [schumer]
+  jeffries: [jeffries]
+
+labels:
+  version: stance-v1            # recorded with every label; change it whenever anything below changes
+  instruction: |
+    The posts are about US Democratic congressional leaders.
+    stance is toward the named leader, not toward the party or the topic.
+    List in entities only the leaders the post is actually about; a surname
+    can belong to someone else.
+  dimensions:
+    stance:
+      values: [critical, supportive, neutral, unclear]
+      unsure: unclear           # this value sends the post to a stronger model, then to a person
+
+narratives:
+  min_cluster_size: 25          # the smallest group of posts worth calling a narrative
+
+markers:                        # dated lines drawn on this topic's charts
+  - {date: 2026-11-03, label: Election day}

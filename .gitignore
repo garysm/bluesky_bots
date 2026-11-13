@@ -1,3 +1,10 @@
 .env
 .claude
 .vscode
+
+# data, reports and build leftovers
+data/
+out/
+__pycache__/
+*.egg-info/
+.pytest_cache/

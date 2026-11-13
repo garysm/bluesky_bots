@@ -1,17 +1,36 @@
-import asyncio
-import json
+import asyncio, json
+from urllib.parse import urlencode
 import websockets
 
-URI = (
-  "wss://jetstream.us-east.bsky.network/xrpc/network.bsky.jetstream.subscribeEvents"
-  "?collections=app.bsky.feed.post&kinds=commit"
-)
+HOST = "wss://jetstream.us-east.bsky.network"
+PATH = "/xrpc/network.bsky.jetstream.subscribeEvents"
 
-async def listen():
-  async with websockets.connect(URI, subprotocols=["xrpc.v1.json"]) as ws:
-    async for frame in ws:
-      event = json.loads(frame)["payload"]
-      if event["operation"] != "delete":
-        print(event["seq"], event["did"], event["record"]["text"])
+def build_url(collections, dids=(), cursor=None):
+    q = [("collections", c) for c in collections]
+    q += [("dids", d) for d in dids]
+    q.append(("kinds", "commit"))
+    if cursor is not None:
+        q.append(("cursor", str(cursor)))
+    return f"{HOST}{PATH}?{urlencode(q)}"
 
-asyncio.run(listen())
+print(build_url(["app.bsky.feed.post", "app.bsky.feed.repost"]))
+
+async def consume(collections, handle, dids=(), cursor=None):
+    backoff = 1
+    while True:
+        try:
+            url = build_url(collections, dids, cursor)
+            async with websockets.connect(url, subprotocols=["xrpc.v1.json"]) as ws:
+                backoff = 1
+                async for frame in ws:
+                    event = json.loads(frame)["payload"]
+                    await handle(event)
+                    cursor = event["seq"]
+        except (websockets.ConnectionClosed, OSError):
+            await asyncio.sleep(backoff)
+            backoff = min(backoff * 2, 60)
+
+async def handle(event):
+  print(json.dumps(event) + "\n")
+
+asyncio.run(consume(["app.bsky.feed.post", "app.bsky.feed.repost"], handle))

@@ -1,0 +1,26 @@
+# A second example, to show the format is not tied to one kind of question.
+# It has no entities, no watched accounts, and two dimensions.
+# It is inactive, so the stream does not capture it until you set active: true.
+
+name: example-remote-work
+title: Remote work and return-to-office
+active: false
+
+match:
+  keywords: [remote work, work from home, return to office, hybrid work]
+  patterns: ['\bRTO\b', '\bWFH\b']
+
+labels:
+  version: position-v1
+  instruction: |
+    The posts are about where office work should be done.
+    position is the view the post itself expresses, not the view of anyone it quotes.
+  dimensions:
+    position:
+      values: [favors_remote, favors_office, mixed, unclear]
+      unsure: unclear
+    kind:
+      values: [personal_experience, news, opinion, other]
+
+narratives:
+  min_cluster_size: 15

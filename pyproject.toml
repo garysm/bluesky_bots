@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bluesky-bots"
+version = "0.1.0"
+description = "Topic-driven services for collecting, classifying and clustering Bluesky conversations"
+requires-python = ">=3.12"
+# Dependencies are installed by conda from environment.yml.
+
+[tool.setuptools.packages.find]
+include = ["bluesky_bots*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider"
+markers = [
+    "page05: storage contract tests that docs/05-storage.md makes pass",
+    "page07: storage contract tests that docs/07-classify.md makes pass",
+    "page09: storage contract tests that docs/09-narratives.md makes pass",
+    "page10: storage contract tests that docs/10-signals.md makes pass",
+    "page11: storage contract tests that docs/11-review.md makes pass",
+    "complete: storage contract tests that need every DuckDBStore method",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:langsmith.*",
+    "ignore:BaseAgentConfig is deprecated:DeprecationWarning",
+]

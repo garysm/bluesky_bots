@@ -15,9 +15,11 @@ dependencies:
   - python-dotenv
   - websockets
   - httpx
+  - pytest                                # runs the checks in tests/
   - pip
   - pip:
       - "google-adk[extensions]==2.7.1"   # [extensions] brings LiteLLM: non-Gemini models, embeddings
       - duckdb
       - datasketch
       - atproto                           # only used if search ever needs a login
+      - -e .                              # this project's own package, bluesky_bots
